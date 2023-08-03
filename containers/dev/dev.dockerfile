@@ -21,13 +21,10 @@ ARG USERSHELLPROFILE="${USERHOME}/.${USERSHELL}rc"
 ARG CONTAINERNAME="dev"
 
 # Add user and grant sudo permission.
-ARG USER_UID=1000
-ARG USER_GID=1000
 RUN adduser --shell $USERSHELLPATH --disabled-password --gecos "" $USERNAME && \
     echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/$USERNAME && \
     chmod 0440 /etc/sudoers.d/$USERNAME
-RUN groupmod -o -g $USER_GID $USERNAME
-RUN usermod -u $USER_UID -g $USER_GID $USERNAME
+
 
 ARG USER_GROUPS=""
 RUN if [ -n "$USER_GROUPS" ]; then \
