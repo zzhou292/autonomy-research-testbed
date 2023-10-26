@@ -41,143 +41,6 @@ import pychrono.sensor as sens
 
 #// =============================================================================
 
-class ChSystem_DataGeneratorFunctor(veh.ChExternalDriver_DataGeneratorFunctor):
-    def __init__(self, id: str, system: chrono.ChSystem):
-        super().__init__("ChSystem", id)
-
-        self.system = system
-
-    def Serialize(self, writer):
-        writer.Key("time") << self.system.GetChTime()
-
-class ChCameraSensor_DataGeneratorFunctor(veh.ChExternalDriver_DataGeneratorFunctor):
-    def __init__(self, id: str, cam: sens.ChCameraSensor):
-        super().__init__("ChCameraSensor", id)
-
-        self.cam = cam
-
-    def Serialize(self, writer):
-        rgba8_buffer = self.cam.GetMostRecentRGBA8Buffer()
-        if rgba8_buffer.HasData():
-            rgba8_data = rgba8_buffer.GetRGBA8Data()
-            rgba8_data = np.ascontiguousarray(rgba8_data[::-1]) # Needs to be contigious
-            shape = rgba8_data.shape
-            writer.Key("width") << shape[1]
-            writer.Key("height") << shape[0] 
-            writer.Key("size") << shape[2]
-            writer.Key("encoding") << "rgba8"
-            writer.Key("image").PointerAsString(rgba8_data.ctypes.data, int(np.prod(shape)))
-
-    def HasData(self) -> bool:
-        rgba8_buffer = self.cam.GetMostRecentRGBA8Buffer()
-        return rgba8_buffer.HasData()
-
-class ChVehicle_DataGeneratorFunctor(veh.ChExternalDriver_DataGeneratorFunctor):
-    def __init__(self, id: str, vehicle: veh.ChVehicle):
-        super().__init__("ChVehicle", id)
-
-        self.vehicle = vehicle
-
-    def Serialize(self, writer):
-        body = self.vehicle.GetChassisBody()
-
-        writer.Key("pos") << body.GetPos()
-        writer.Key("rot") << body.GetRot()
-        writer.Key("lin_vel") << body.GetPos_dt()
-        writer.Key("ang_vel") << body.GetWvel_loc()
-        writer.Key("lin_acc") << body.GetPos_dtdt()
-        writer.Key("ang_acc") << body.GetWacc_loc()
-
-class ChAccelerometerSensor_DataGeneratorFunctor(veh.ChExternalDriver_DataGeneratorFunctor):
-    def __init__(self, id: str, acc: sens.ChAccelerometerSensor):
-        super().__init__("ChAccelerometerSensor", id)
-
-        self.acc = acc
-
-    def Serialize(self, writer):
-        buffer = self.acc.GetMostRecentAccelBuffer()
-        if buffer.HasData():
-            data = buffer.GetAccelData()
-            writer.Key("X") << data[0]
-            writer.Key("Y") << data[1]
-            writer.Key("Z") << data[2]
-
-    def HasData(self) -> bool:
-        buffer = self.acc.GetMostRecentAccelBuffer()
-        return buffer.HasData()
-
-class ChGyroscopeSensor_DataGeneratorFunctor(veh.ChExternalDriver_DataGeneratorFunctor):
-    def __init__(self, id: str, gyro: sens.ChGyroscopeSensor):
-        super().__init__("ChGyroscopeSensor", id)
-
-        self.gyro = gyro
-
-    def Serialize(self, writer):
-        buffer = self.gyro.GetMostRecentGyroBuffer()
-        if buffer.HasData():
-            data = buffer.GetGyroData()
-            writer.Key("roll") << data[0]
-            writer.Key("pitch") << data[1]
-            writer.Key("yaw") << data[2]
-
-    def HasData(self) -> bool:
-        buffer = self.gyro.GetMostRecentGyroBuffer()
-        return buffer.HasData()
-
-class ChMagnetometerSensor_DataGeneratorFunctor(veh.ChExternalDriver_DataGeneratorFunctor):
-    def __init__(self, id: str, mag: sens.ChMagnetometerSensor):
-        super().__init__("ChMagnetometerSensor", id)
-
-        self.mag = mag
-
-    def Serialize(self, writer):
-        buffer = self.mag.GetMostRecentMagnetBuffer()
-        if buffer.HasData():
-            data = buffer.GetMagnetData()
-            writer.Key("X") << data[0]
-            writer.Key("Y") << data[1]
-            writer.Key("Z") << data[2]
-
-    def HasData(self) -> bool:
-        buffer = self.mag.GetMostRecentMagnetBuffer()
-        return buffer.HasData()
-
-class ChGPSSensor_DataGeneratorFunctor(veh.ChExternalDriver_DataGeneratorFunctor):
-    def __init__(self, id: str, gps: sens.ChGPSSensor):
-        super().__init__("ChGPSSensor", id)
-
-        self.gps = gps
-
-    def Serialize(self, writer):
-        buffer = self.gps.GetMostRecentGPSBuffer()
-        if buffer.HasData():
-            data = buffer.GetGPSData().astype(str)
-            writer.Key("latitude") << data[0]
-            writer.Key("longitude") << data[1]
-            writer.Key("altitude") << data[2]
-
-    def HasData(self) -> bool:
-        buffer = self.gps.GetMostRecentGPSBuffer()
-        return buffer.HasData()
-
-class ChDriverInputs_DataParserFunctor(veh.ChExternalDriver_DataParserFunctor):
-    def __init__(self, driver: veh.ChDriver):
-        super().__init__("ChDriverInputs")
-
-        self.driver = driver
-
-    def Deserialize(self, reader):
-        steering = reader.GetFloat()
-        throttle = reader.GetFloat()
-        braking = reader.GetFloat()
-
-        self.driver.SetThrottle(throttle)
-        self.driver.SetSteering(steering)
-        self.driver.SetBraking(braking)
-
-
-#// =============================================================================
-
 def main():
     
     def AddRandomCones(count, filename, class_id=1):
@@ -300,8 +163,8 @@ def main():
 
 
 
-    # Create the RCCar vehicle, set parameters, and initialize
-    vehicle = veh.RCCar()
+    # Create the ARTcar vehicle, set parameters, and initialize
+    vehicle = veh.ARTcar()
     vehicle.SetContactMethod(contact_method)
     vehicle.SetChassisCollisionType(chassis_collision_type)
     vehicle.SetChassisFixed(False)
@@ -444,56 +307,40 @@ def main():
     LabelConeAssets()
     manager.ReconstructScenes()
 
-    driver = veh.ChExternalDriver(vehicle.GetVehicle(), 50000)
-
-    system_generator = ChSystem_DataGeneratorFunctor("~/output/time", vehicle.GetSystem())
-    driver.AddDataGenerator(system_generator)
-
-    veh_generator = ChVehicle_DataGeneratorFunctor("~/output/vehicle", vehicle.GetVehicle())
-    driver.AddDataGenerator(veh_generator, 10)
-
-    cam_generator = ChCameraSensor_DataGeneratorFunctor("~/output/camera/front_facing_camera", camera)
-    driver.AddDataGenerator(cam_generator, frame_rate)
-
-    acc_generator = ChAccelerometerSensor_DataGeneratorFunctor("~/output/accelerometer/data", acc)
-    driver.AddDataGenerator(acc_generator, 100)
-
-    gyro_generator = ChGyroscopeSensor_DataGeneratorFunctor("~/output/gyroscope/data", gyro)
-    driver.AddDataGenerator(gyro_generator, 100)
-
-    mag_generator = ChMagnetometerSensor_DataGeneratorFunctor("~/output/magnetometer/data", mag)
-    driver.AddDataGenerator(mag_generator, 100)
-
-    gps_generator = ChGPSSensor_DataGeneratorFunctor("~/output/gps/data", gps)
-    driver.AddDataGenerator(gps_generator, 10)
-
-    inputs_parser = ChDriverInputs_DataParserFunctor(driver)
-    driver.AddDataParser(inputs_parser)
-
     # Create the vehicle Irrlicht interface
-    if USE_IRRLICHT:
-        app = veh.ChWheeledVehicleIrrApp(vehicle.GetVehicle(), 'RC Car')
-        app.AddTypicalLights()
-        app.AddLogo(chrono.GetChronoDataFile('logo_pychrono_alpha.png'))
-        app.SetChaseCamera(trackPoint, 15.0, 0.5)
-        app.SetTimestep(step_size)
-        app.AssetBindAll()
-        app.AssetUpdateAll()
+
+    vis = veh.ChWheeledVehicleVisualSystemIrrlicht()
+    vis.SetWindowTitle('dart')
+    vis.SetWindowSize(1280, 1024)
+    vis.SetChaseCamera(trackPoint, 4.0, 0.5)
+    vis.Initialize()
+    vis.AddLogo(chrono.GetChronoDataFile('logo_pychrono_alpha.png'))
+    vis.AddLightDirectional()
+    vis.AddSkyBox()
+    vis.AttachVehicle(vehicle.GetVehicle())
+
+
+    driver_data = veh.vector_Entry([veh.DataDriverEntry(0.0, 0.0, 0.0, 0.0), 
+                                    veh.DataDriverEntry(0.1, -1.0, 0.0, 0.0),
+                                    veh.DataDriverEntry(0.5, -1.0, 0.7, 0.0),
+                                    ])
+    driver = veh.ChDataDriver(vehicle.GetVehicle(), driver_data)
+    driver.Initialize()
 
     # Simulation loop
     realtime_timer = chrono.ChRealtimeStepTimer()
+    
+    
+    render_step = 10
+    step_number = 0
     while True:
         time = vehicle.GetSystem().GetChTime()
-    
-        # End simulation
-        if (USE_IRRLICHT and not app.GetDevice().run()) or time >= t_end:
-            break
 
         # Draw scene
-        if USE_IRRLICHT:
-            app.BeginScene(True, True, irr.SColor(255, 140, 161, 192))
-            app.DrawAll()
-            app.EndScene()
+        if(step_number % render_step == 0):
+            vis.BeginScene()
+            vis.Render()
+            vis.EndScene()
 
         # Get driver inputs
         driver_inputs = driver.GetInputs()
@@ -502,15 +349,13 @@ def main():
         driver.Synchronize(time)
         terrain.Synchronize(time)
         vehicle.Synchronize(time, driver_inputs, terrain)
-        if USE_IRRLICHT:
-            app.Synchronize("", driver_inputs)
+        vis.Synchronize(time, driver_inputs)
 
         # Advance simulation for one timestep for all modules
         driver.Advance(step_size)
         terrain.Advance(step_size)
         vehicle.Advance(step_size)
-        if USE_IRRLICHT:
-            app.Advance(step_size)
+        vis.Advance(step_size)
 
         # Update sensor manager
         # Will render/save/filter automatically
@@ -518,6 +363,8 @@ def main():
 
         # Spin in place for real time to catch up
         realtime_timer.Spin(step_size)
+        
+        step_number = step_number + 1
     
     return 0       
     

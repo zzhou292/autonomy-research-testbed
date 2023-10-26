@@ -17,37 +17,37 @@
   "Idler":
   {
       "Input File":           "M113/idler/M113_DoubleIdler_Left.json",
-      "Location":             [-3.83, 0, -0.12]
+      "Location":             [-3.95, 0, -0.12]
   },
 
   "Suspension Subsystems":
   [
     {
-        "Input File":         "M113/suspension/M113_LinearDamperSuspension_Left.json",
+        "Input File":         "M113/suspension/M113_TranslationalDamperSuspension_Left.json",
         "Has Shock":          true,
         "Location":           [-0.655, 0, -0.215]
     },
 
     {
-        "Input File":         "M113/suspension/M113_LinearDamperSuspension_Left.json",
+        "Input File":         "M113/suspension/M113_TranslationalDamperSuspension_Left.json",
         "Has Shock":          true,
         "Location":           [-1.322, 0, -0.215]
     },
 
     {
-        "Input File":         "M113/suspension/M113_LinearDamperSuspension_Left.json",
+        "Input File":         "M113/suspension/M113_TranslationalDamperSuspension_Left.json",
         "Has Shock":          false,
         "Location":           [-1.989, 0, -0.215]
     },
 
     {
-        "Input File":         "M113/suspension/M113_LinearDamperSuspension_Left.json",
+        "Input File":         "M113/suspension/M113_TranslationalDamperSuspension_Left.json",
         "Has Shock":          false,
         "Location":           [-2.656, 0, -0.215]
     },
 
     {
-        "Input File":         "M113/suspension/M113_LinearDamperSuspension_Left.json",
+        "Input File":         "M113/suspension/M113_TranslationalDamperSuspension_Left.json",
         "Has Shock":          true,
         "Location":           [-3.322, 0, -0.215]
     }
